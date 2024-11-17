@@ -155,9 +155,6 @@ if menu == "Voir les repas":
         response = supabase.table("meals").select("*").eq("user_id", user_id).execute()
         meals = response.data
         
-        # Debug : afficher les repas récupérés
-        st.write("Données récupérées :", meals)
-
         # Vérification si des repas existent
         if meals and len(meals) > 0:
             # Construire un tableau HTML
