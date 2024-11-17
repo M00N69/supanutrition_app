@@ -133,7 +133,7 @@ if menu == "Voir les repas":
                 photos = photos_response.data
 
                 # Si des photos existent, prendre la première comme miniature
-                photo_url = photos[0]["photo_url"] if photos and len(photos) > 0 else None
+                photo_url = photos[0]["photo_url"] if photos and len(photos) > 0 else "Aucune photo"
 
                 # Ajouter les données formatées dans la liste
                 formatted_data.append({
@@ -142,20 +142,17 @@ if menu == "Voir les repas":
                     "Protéines (g)": meal["proteins"],
                     "Glucides (g)": meal["carbs"],
                     "Lipides (g)": meal["fats"],
-                    "Preview": photo_url  # URL de la photo pour la colonne image
+                    "Photo URL": photo_url  # URL de la photo ou texte "Aucune photo"
                 })
 
             # Convertir les données en DataFrame Pandas
             df = pd.DataFrame(formatted_data)
 
-            # Configurer la DataFrame pour afficher les images dans la colonne "Preview"
-            st.dataframe(
-                df,
-                use_container_width=True,
-                column_config={
-                    "Preview": st.column_config.ImageColumn(
-                        "Photo",  # Nom de la colonne
-                        use_container_width=True
-                    )
-                },
-            )
+            # Afficher le tableau dans Streamlit avec des liens pour les photos
+            st.write("Cliquez sur les liens pour afficher les photos (si disponibles).")
+            for index, row in df.iterrows():
+                st.markdown(f"**Nom**: {row['Nom']} - **Calories**: {row['Calories']} - **Protéines (g)**: {row['Protéines (g)']} - **Glucides (g)**: {row['Glucides (g)']} - **Lipides (g)**: {row['Lipides (g)']}")
+                if row["Photo URL"] != "Aucune photo":
+                    st.image(row["Photo URL"], width=150, caption=f"Photo de {row['Nom']}")
+                else:
+                    st.write("Aucune photo disponible.")
