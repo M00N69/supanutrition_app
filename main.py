@@ -75,13 +75,15 @@ if menu == "Ajouter un repas":
             if uploaded_file is not None:
                 # Générer un nom de fichier unique
                 file_name = f"meals/{user_id}_{name.replace(' ', '_')}.jpg"
-                file_bytes = BytesIO(uploaded_file.read())
                 
                 try:
-                    # Upload du fichier dans Supabase Storage
-                    storage_response = supabase.storage.from_("photos").upload(file_name, file_bytes, {"content-type": uploaded_file.type})
+                    # Lire le fichier en tant que bytes
+                    file_bytes = uploaded_file.read()
                     
-                    if "error" in storage_response:
+                    # Upload du fichier dans Supabase Storage
+                    storage_response = supabase.storage.from_("photos").upload(file_name, file_bytes)
+                    
+                    if storage_response.get("error"):
                         st.error(f"Erreur lors de l'upload de la photo : {storage_response['error']['message']}")
                     else:
                         # Générer l'URL publique de la photo
