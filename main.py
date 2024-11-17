@@ -107,22 +107,90 @@ if menu == "Ajouter un repas":
             except Exception as e:
                 st.error(f"Erreur inattendue : {str(e)}")
 
-# Voir les repas
 if menu == "Voir les repas":
     if st.session_state["user"] is None:
         st.warning("Veuillez vous connecter pour voir vos repas.")
     else:
         st.header("Vos repas")
+        
+        # Ajouter des styles CSS pour le tableau
+        st.markdown(
+            """
+            <style>
+                .meal-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 20px;
+                }
+                .meal-table th, .meal-table td {
+                    border: 1px solid #ddd;
+                    padding: 8px;
+                    text-align: center;
+                }
+                .meal-table th {
+                    background-color: #f2f2f2;
+                    font-weight: bold;
+                }
+                .meal-photo-thumbnail {
+                    width: 100px;
+                    height: auto;
+                    cursor: pointer;
+                }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+        
         user_id = st.session_state["user"]["id"]
         response = supabase.table("meals").select("*").eq("user_id", user_id).execute()
         meals = response.data
         if meals:
+            # Construire un tableau HTML
+            table_html = """
+            <table class="meal-table">
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>Calories</th>
+                        <th>Protéines (g)</th>
+                        <th>Glucides (g)</th>
+                        <th>Lipides (g)</th>
+                        <th>Photos</th>
+                    </tr>
+                </thead>
+                <tbody>
+            """
+            
             for meal in meals:
-                st.write(f"Nom : {meal['name']}, Calories : {meal['calories']}, Protéines : {meal['proteins']}, Glucides : {meal['carbs']}, Lipides : {meal['fats']}")
                 photos_response = supabase.table("meal_photos").select("*").eq("meal_id", meal["id"]).execute()
                 photos = photos_response.data
+                photo_thumbnails = ""
+                
                 if photos:
                     for photo in photos:
-                        st.image(photo["photo_url"], caption=f"Photo de {meal['name']}")
+                        photo_thumbnails += f"""
+                        <a href="{photo['photo_url']}" target="_blank">
+                            <img class="meal-photo-thumbnail" src="{photo['photo_url']}" alt="Photo de {meal['name']}">
+                        </a>
+                        """
+                else:
+                    photo_thumbnails = "Aucune photo"
+                
+                # Ajouter une ligne au tableau
+                table_html += f"""
+                <tr>
+                    <td>{meal['name']}</td>
+                    <td>{meal['calories']}</td>
+                    <td>{meal['proteins']}</td>
+                    <td>{meal['carbs']}</td>
+                    <td>{meal['fats']}</td>
+                    <td>{photo_thumbnails}</td>
+                </tr>
+                """
+            
+            table_html += "</tbody></table>"
+            
+            # Afficher le tableau dans Streamlit
+            st.markdown(table_html, unsafe_allow_html=True)
         else:
             st.info("Aucun repas enregistré.")
