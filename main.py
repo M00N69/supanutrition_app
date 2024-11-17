@@ -113,62 +113,55 @@ if menu == "Voir les repas":
     else:
         st.header("Vos repas")
         
-        # Ajouter des styles CSS pour un design attrayant
-        st.markdown(
-            """
-            <style>
-                .meal-table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-top: 20px;
-                }
-                .meal-table th, .meal-table td {
-                    border: 1px solid #ddd;
-                    padding: 8px;
-                    text-align: center;
-                }
-                .meal-table th {
-                    background-color: #333;
-                    color: #fff;
-                    font-weight: bold;
-                }
-                .meal-table tr:nth-child(even) {
-                    background-color: #444;
-                }
-                .meal-table tr:nth-child(odd) {
-                    background-color: #555;
-                }
-                .meal-table tr:hover {
-                    background-color: #666;
-                }
-                .meal-photo-thumbnail {
-                    width: 80px;
-                    height: auto;
-                    border-radius: 5px;
-                    cursor: pointer;
-                }
-                a {
-                    text-decoration: none;
-                    color: #fff;
-                }
-                a:hover {
-                    color: #00f;
-                }
-            </style>
-            """,
-            unsafe_allow_html=True,
-        )
-        
         # Récupérer les repas depuis Supabase
         user_id = st.session_state["user"]["id"]
         response = supabase.table("meals").select("*").eq("user_id", user_id).execute()
         meals = response.data
         
-        # Vérification si des repas existent
+        # Vérification des repas
         if not meals or len(meals) == 0:
             st.info("Aucun repas enregistré.")
         else:
-            # Construire un tableau HTML
+            # Ajouter des styles CSS pour le tableau
+            st.markdown(
+                """
+                <style>
+                    .meal-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-top: 20px;
+                    }
+                    .meal-table th, .meal-table td {
+                        border: 1px solid #ddd;
+                        padding: 8px;
+                        text-align: center;
+                    }
+                    .meal-table th {
+                        background-color: #333;
+                        color: #fff;
+                        font-weight: bold;
+                    }
+                    .meal-table tr:nth-child(even) {
+                        background-color: #444;
+                    }
+                    .meal-table tr:nth-child(odd) {
+                        background-color: #555;
+                    }
+                    .meal-table tr:hover {
+                        background-color: #666;
+                    }
+                    .meal-photo-thumbnail {
+                        width: 80px;
+                        height: auto;
+                        border-radius: 5px;
+                        cursor: pointer;
+                    }
+                </style>
+                """,
+                unsafe_allow_html=True,
+            )
+            
+            # Construire le tableau HTML
             table_html = """
             <table class="meal-table">
                 <thead>
@@ -185,12 +178,10 @@ if menu == "Voir les repas":
             """
             
             for meal in meals:
-                # Récupérer les photos associées au repas
                 photos_response = supabase.table("meal_photos").select("*").eq("meal_id", meal["id"]).execute()
                 photos = photos_response.data
                 photo_thumbnails = ""
-
-                # Ajouter des miniatures pour chaque photo
+                
                 if photos and len(photos) > 0:
                     for photo in photos:
                         photo_thumbnails += f"""
@@ -200,8 +191,7 @@ if menu == "Voir les repas":
                         """
                 else:
                     photo_thumbnails = "Aucune photo"
-
-                # Ajouter une ligne dans le tableau
+                
                 table_html += f"""
                 <tr>
                     <td>{meal['name']}</td>
