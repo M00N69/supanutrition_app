@@ -64,11 +64,21 @@ if menu == "Ajouter un repas":
                 "carbs": carbs,
                 "fats": fats,
             }
-            response = supabase.table("meals").insert(data).execute()
-            if response.status_code == 200:
-                st.success("Repas ajouté avec succès !")
-            else:
-                st.error("Erreur lors de l'ajout du repas.")
+            
+            # Debug des données envoyées
+            st.write("Données envoyées à Supabase:", data)
+            
+            try:
+                response = supabase.table("meals").insert(data).execute()
+                
+                # Vérifiez si la réponse contient une erreur
+                if response.error:
+                    st.error(f"Erreur : {response.error['message']}")
+                else:
+                    st.success("Repas ajouté avec succès !")
+                    st.write(response.data)  # Facultatif : Affichez la réponse de Supabase
+            except Exception as e:
+                st.error(f"Erreur inattendue : {str(e)}")
 
 # Voir les repas
 if menu == "Voir les repas":
@@ -81,6 +91,6 @@ if menu == "Voir les repas":
         meals = response.data
         if meals:
             for meal in meals:
-                st.write(f"Nom : {meal['name']}, Calories : {meal['calories']}")
+                st.write(f"Nom : {meal['name']}, Calories : {meal['calories']}, Protéines : {meal['proteins']}, Glucides : {meal['carbs']}, Lipides : {meal['fats']}")
         else:
             st.info("Aucun repas enregistré.")
