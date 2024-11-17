@@ -21,10 +21,11 @@ if menu == "Inscription":
     password = st.text_input("Mot de passe", type="password")
     if st.button("S'inscrire"):
         response = supabase.auth.sign_up({"email": email, "password": password})
-        if response.get("user"):
+        # Vérifiez si la réponse contient un utilisateur
+        if response.user:
             st.success("Inscription réussie !")
         else:
-            st.error(f"Erreur : {response.get('error', {}).get('message')}")
+            st.error(f"Erreur : {response.get('error', {}).get('message', 'Erreur inconnue')}")
 
 # Connexion
 if menu == "Connexion":
@@ -33,11 +34,12 @@ if menu == "Connexion":
     password = st.text_input("Mot de passe", type="password")
     if st.button("Connexion"):
         response = supabase.auth.sign_in_with_password({"email": email, "password": password})
-        if response.get("user"):
+        # Vérifiez si la réponse contient un utilisateur
+        if response.user:
             st.success("Connexion réussie !")
-            st.session_state["user"] = response["user"]
+            st.session_state["user"] = response.user
         else:
-            st.error(f"Erreur : {response.get('error', {}).get('message')}")
+            st.error(f"Erreur : {response.get('error', {}).get('message', 'Erreur inconnue')}")
 
 # Ajouter un repas
 if menu == "Ajouter un repas" and "user" in st.session_state:
@@ -58,7 +60,7 @@ if menu == "Ajouter un repas" and "user" in st.session_state:
             "fats": fats,
         }
         response = supabase.table("meals").insert(data).execute()
-        if response.get("status_code") == 200:
+        if response.status_code == 200:
             st.success("Repas ajouté avec succès !")
         else:
             st.error("Erreur lors de l'ajout du repas.")
@@ -68,9 +70,10 @@ if menu == "Voir les repas" and "user" in st.session_state:
     st.header("Vos repas")
     user_id = st.session_state["user"]["id"]
     response = supabase.table("meals").select("*").eq("user_id", user_id).execute()
-    meals = response.get("data", [])
+    meals = response.data
     if meals:
         for meal in meals:
             st.write(f"Nom : {meal['name']}, Calories : {meal['calories']}")
     else:
         st.info("Aucun repas enregistré.")
+
