@@ -2,6 +2,8 @@ import streamlit as st
 from supabase import create_client
 from io import BytesIO
 import uuid
+import streamlit.components.v1 as components
+
 
 # Charger les secrets de Streamlit Cloud
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
@@ -117,18 +119,25 @@ if menu == "Voir les repas":
         user_id = st.session_state["user"]["id"]
         response = supabase.table("meals").select("*").eq("user_id", user_id).execute()
         meals = response.data
-        
+
         if not meals or len(meals) == 0:
             st.info("Aucun repas enregistré.")
         else:
-            # Ajouter des styles CSS pour améliorer l'apparence du tableau
-            st.markdown(
-                """
+            # Générer le tableau HTML
+            table_html = """
+            <!DOCTYPE html>
+            <html>
+            <head>
                 <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        color: #fff;
+                        background-color: #333;
+                    }
                     .meal-table {
                         width: 100%;
                         border-collapse: collapse;
-                        margin-top: 20px;
+                        margin: 20px 0;
                     }
                     .meal-table th, .meal-table td {
                         border: 1px solid #ddd;
@@ -136,41 +145,35 @@ if menu == "Voir les repas":
                         text-align: center;
                     }
                     .meal-table th {
-                        background-color: #333;
+                        background-color: #444;
                         color: #fff;
-                        font-weight: bold;
                     }
                     .meal-table tr:nth-child(even) {
-                        background-color: #444;
-                    }
-                    .meal-table tr:nth-child(odd) {
                         background-color: #555;
+                    }
+                    .meal-table tr:hover {
+                        background-color: #666;
                     }
                     .meal-photo-thumbnail {
                         width: 80px;
                         height: auto;
                         border-radius: 5px;
-                        cursor: pointer;
                     }
                 </style>
-                """,
-                unsafe_allow_html=True,
-            )
-            
-            # Générer le tableau HTML
-            table_html = """
-            <table class="meal-table">
-                <thead>
-                    <tr>
-                        <th>Nom</th>
-                        <th>Calories</th>
-                        <th>Protéines (g)</th>
-                        <th>Glucides (g)</th>
-                        <th>Lipides (g)</th>
-                        <th>Photos</th>
-                    </tr>
-                </thead>
-                <tbody>
+            </head>
+            <body>
+                <table class="meal-table">
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Calories</th>
+                            <th>Protéines (g)</th>
+                            <th>Glucides (g)</th>
+                            <th>Lipides (g)</th>
+                            <th>Photos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
             """
             
             for meal in meals:
@@ -201,7 +204,12 @@ if menu == "Voir les repas":
                 </tr>
                 """
             
-            table_html += "</tbody></table>"
-            
-            # Afficher le tableau HTML
-            st.markdown(table_html, unsafe_allow_html=True)
+            table_html += """
+                    </tbody>
+                </table>
+            </body>
+            </html>
+            """
+
+            # Utiliser components.html pour afficher le tableau
+            components.html(table_html, height=600, scrolling=True)
