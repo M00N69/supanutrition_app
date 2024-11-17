@@ -83,8 +83,9 @@ if menu == "Ajouter un repas":
                     # Upload du fichier dans Supabase Storage
                     storage_response = supabase.storage.from_("photos").upload(file_name, file_bytes)
                     
-                    if storage_response.get("error"):
-                        st.error(f"Erreur lors de l'upload de la photo : {storage_response['error']['message']}")
+                    # Vérification si l'upload a réussi
+                    if storage_response.error_message:  # Vérifier si une erreur est retournée
+                        st.error(f"Erreur lors de l'upload de la photo : {storage_response.error_message}")
                     else:
                         # Générer l'URL publique de la photo
                         photo_url = f"{SUPABASE_URL}/storage/v1/object/public/photos/{file_name}"
