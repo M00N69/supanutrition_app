@@ -123,17 +123,10 @@ if menu == "Voir les repas":
         if not meals or len(meals) == 0:
             st.info("Aucun repas enregistré.")
         else:
-            # Générer le tableau HTML
-            table_html = """
-            <!DOCTYPE html>
-            <html>
-            <head>
+            # Ajouter des styles CSS pour améliorer l'apparence du tableau
+            st.markdown(
+                """
                 <style>
-                    body {
-                        font-family: Arial, sans-serif;
-                        color: #fff;
-                        background-color: #333;
-                    }
                     .meal-table {
                         width: 100%;
                         border-collapse: collapse;
@@ -160,20 +153,24 @@ if menu == "Voir les repas":
                         border-radius: 5px;
                     }
                 </style>
-            </head>
-            <body>
-                <table class="meal-table">
-                    <thead>
-                        <tr>
-                            <th>Nom</th>
-                            <th>Calories</th>
-                            <th>Protéines (g)</th>
-                            <th>Glucides (g)</th>
-                            <th>Lipides (g)</th>
-                            <th>Photos</th>
-                        </tr>
-                    </thead>
-                    <tbody>
+                """,
+                unsafe_allow_html=True,
+            )
+            
+            # Générer le tableau HTML
+            table_html = """
+            <table class="meal-table">
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>Calories</th>
+                        <th>Protéines (g)</th>
+                        <th>Glucides (g)</th>
+                        <th>Lipides (g)</th>
+                        <th>Photos</th>
+                    </tr>
+                </thead>
+                <tbody>
             """
             
             for meal in meals:
@@ -207,8 +204,6 @@ if menu == "Voir les repas":
             table_html += """
                     </tbody>
                 </table>
-            </body>
-            </html>
             """
 
             # Utiliser components.html pour afficher le tableau
