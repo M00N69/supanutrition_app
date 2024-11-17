@@ -3,6 +3,7 @@ from supabase import create_client
 from io import BytesIO
 import uuid
 import streamlit.components.v1 as components
+import pandas as pd
 
 
 # Charger les secrets de Streamlit Cloud
@@ -123,88 +124,38 @@ if menu == "Voir les repas":
         if not meals or len(meals) == 0:
             st.info("Aucun repas enregistré.")
         else:
-            # Ajouter des styles CSS pour améliorer l'apparence du tableau
-            st.markdown(
-                """
-                <style>
-                    .meal-table {
-                        width: 100%;
-                        border-collapse: collapse;
-                        margin: 20px 0;
-                    }
-                    .meal-table th, .meal-table td {
-                        border: 1px solid #ddd;
-                        padding: 8px;
-                        text-align: center;
-                    }
-                    .meal-table th {
-                        background-color: #444;
-                        color: #fff;
-                    }
-                    .meal-table tr:nth-child(even) {
-                        background-color: #555;
-                    }
-                    .meal-table tr:hover {
-                        background-color: #666;
-                    }
-                    .meal-photo-thumbnail {
-                        width: 80px;
-                        height: auto;
-                        border-radius: 5px;
-                    }
-                </style>
-                """,
-                unsafe_allow_html=True,
-            )
-            
-            # Générer le tableau HTML
-            table_html = """
-            <table class="meal-table">
-                <thead>
-                    <tr>
-                        <th>Nom</th>
-                        <th>Calories</th>
-                        <th>Protéines (g)</th>
-                        <th>Glucides (g)</th>
-                        <th>Lipides (g)</th>
-                        <th>Photos</th>
-                    </tr>
-                </thead>
-                <tbody>
-            """
-            
+            # Créer une liste de dictionnaires pour stocker les données formatées
+            formatted_data = []
+
             for meal in meals:
                 # Récupérer les photos associées
                 photos_response = supabase.table("meal_photos").select("*").eq("meal_id", meal["id"]).execute()
                 photos = photos_response.data
-                photo_thumbnails = ""
 
-                if photos and len(photos) > 0:
-                    for photo in photos:
-                        photo_thumbnails += f"""
-                        <a href="{photo['photo_url']}" target="_blank">
-                            <img class="meal-photo-thumbnail" src="{photo['photo_url']}" alt="Photo de {meal['name']}">
-                        </a>
-                        """
-                else:
-                    photo_thumbnails = "Aucune photo"
+                # Si des photos existent, prendre la première comme miniature
+                photo_url = photos[0]["photo_url"] if photos and len(photos) > 0 else None
 
-                # Ajouter une ligne au tableau
-                table_html += f"""
-                <tr>
-                    <td>{meal['name']}</td>
-                    <td>{meal['calories']}</td>
-                    <td>{meal['proteins']}</td>
-                    <td>{meal['carbs']}</td>
-                    <td>{meal['fats']}</td>
-                    <td>{photo_thumbnails}</td>
-                </tr>
-                """
-            
-            table_html += """
-                    </tbody>
-                </table>
-            """
+                # Ajouter les données formatées dans la liste
+                formatted_data.append({
+                    "Nom": meal["name"],
+                    "Calories": meal["calories"],
+                    "Protéines (g)": meal["proteins"],
+                    "Glucides (g)": meal["carbs"],
+                    "Lipides (g)": meal["fats"],
+                    "Preview": photo_url  # URL de la photo pour la colonne image
+                })
 
-            # Utiliser components.html pour afficher le tableau
-            components.html(table_html, height=600, scrolling=True)
+            # Convertir les données en DataFrame Pandas
+            df = pd.DataFrame(formatted_data)
+
+            # Configurer la DataFrame pour afficher les images dans la colonne "Preview"
+            st.dataframe(
+                df,
+                use_container_width=True,
+                column_config={
+                    "Preview": st.column_config.ImageColumn(
+                        "Photo",  # Nom de la colonne
+                        use_container_width=True
+                    )
+                },
+            )
