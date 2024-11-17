@@ -113,97 +113,42 @@ if menu == "Voir les repas":
     else:
         st.header("Vos repas")
         
-        # Ajouter des styles CSS pour un design adaptatif
-        st.markdown(
-            """
-            <style>
-                .meal-table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-top: 20px;
-                }
-                .meal-table th, .meal-table td {
-                    border: 1px solid #ddd;
-                    padding: 8px;
-                    text-align: center;
-                }
-                .meal-table th {
-                    background-color: #f2f2f2;
-                    color: #333;
-                    font-weight: bold;
-                }
-                .meal-table tr:nth-child(even) {
-                    background-color: #f9f9f9;
-                }
-                .meal-table tr:hover {
-                    background-color: #f1f1f1;
-                }
-                .meal-photo-thumbnail {
-                    width: 100px;
-                    height: auto;
-                    cursor: pointer;
-                    border: 1px solid #ddd;
-                    border-radius: 4px;
-                }
-            </style>
-            """,
-            unsafe_allow_html=True,
-        )
-        
         # Récupérer les repas depuis Supabase
         user_id = st.session_state["user"]["id"]
         response = supabase.table("meals").select("*").eq("user_id", user_id).execute()
         meals = response.data
         
-        # Vérification si des repas existent
-        if meals and len(meals) > 0:
-            # Construire un tableau HTML
-            table_html = """
-            <table class="meal-table">
-                <thead>
-                    <tr>
-                        <th>Nom</th>
-                        <th>Calories</th>
-                        <th>Protéines (g)</th>
-                        <th>Glucides (g)</th>
-                        <th>Lipides (g)</th>
-                        <th>Photos</th>
-                    </tr>
-                </thead>
-                <tbody>
-            """
-            
+        # Vérification des données récupérées
+        if not meals or len(meals) == 0:
+            st.info("Aucun repas enregistré.")
+        else:
+            # Liste pour stocker les données formatées pour le tableau
+            data = []
+
+            # Parcourir chaque repas pour formater les données
             for meal in meals:
+                # Récupérer les photos associées au repas
                 photos_response = supabase.table("meal_photos").select("*").eq("meal_id", meal["id"]).execute()
                 photos = photos_response.data
-                photo_thumbnails = ""
-                
-                # Générer les miniatures des photos
+
+                # Générer des liens cliquables pour les photos
                 if photos and len(photos) > 0:
-                    for photo in photos:
-                        photo_thumbnails += f"""
-                        <a href="{photo['photo_url']}" target="_blank">
-                            <img class="meal-photo-thumbnail" src="{photo['photo_url']}" alt="Photo de {meal['name']}">
-                        </a>
-                        """
+                    photo_links = [
+                        f"[Voir photo]({photo['photo_url']})" for photo in photos
+                    ]
+                    photos_display = " | ".join(photo_links)
                 else:
-                    photo_thumbnails = "Aucune photo"
-                
-                # Ajouter une ligne au tableau
-                table_html += f"""
-                <tr>
-                    <td>{meal['name']}</td>
-                    <td>{meal['calories']}</td>
-                    <td>{meal['proteins']}</td>
-                    <td>{meal['carbs']}</td>
-                    <td>{meal['fats']}</td>
-                    <td>{photo_thumbnails}</td>
-                </tr>
-                """
-            
-            table_html += "</tbody></table>"
-            
-            # Afficher le tableau dans Streamlit
-            st.markdown(table_html, unsafe_allow_html=True)
-        else:
-            st.info("Aucun repas enregistré.")
+                    photos_display = "Aucune photo"
+
+                # Ajouter les données du repas dans la liste
+                data.append({
+                    "Nom": meal["name"],
+                    "Calories": meal["calories"],
+                    "Protéines (g)": meal["proteins"],
+                    "Glucides (g)": meal["carbs"],
+                    "Lipides (g)": meal["fats"],
+                    "Photos": photos_display
+                })
+
+            # Afficher les données sous forme de tableau natif Streamlit
+            st.dataframe(data, use_container_width=True)
