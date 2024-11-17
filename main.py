@@ -113,7 +113,7 @@ if menu == "Voir les repas":
     else:
         st.header("Vos repas")
         
-        # Ajouter des styles CSS pour le tableau
+        # Ajouter des styles CSS pour un design adaptatif
         st.markdown(
             """
             <style>
@@ -128,13 +128,26 @@ if menu == "Voir les repas":
                     text-align: center;
                 }
                 .meal-table th {
-                    background-color: #f2f2f2;
+                    background-color: var(--primary-background-color);
+                    color: var(--text-color);
                     font-weight: bold;
+                }
+                .meal-table tr:nth-child(even) {
+                    background-color: var(--secondary-background-color);
+                }
+                .meal-table tr:hover {
+                    background-color: var(--primary-hover-color);
                 }
                 .meal-photo-thumbnail {
                     width: 100px;
                     height: auto;
                     cursor: pointer;
+                    border: 1px solid var(--primary-border-color);
+                    border-radius: 4px;
+                }
+                body {
+                    color: var(--text-color);
+                    background-color: var(--primary-background-color);
                 }
             </style>
             """,
