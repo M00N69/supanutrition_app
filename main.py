@@ -128,21 +128,21 @@ if menu == "Voir les repas":
                     text-align: center;
                 }
                 .meal-table th {
-                    background-color: var(--primary-background-color);
-                    color: var(--text-color);
+                    background-color: #f2f2f2;
+                    color: #333;
                     font-weight: bold;
                 }
                 .meal-table tr:nth-child(even) {
-                    background-color: var(--secondary-background-color);
+                    background-color: #f9f9f9;
                 }
                 .meal-table tr:hover {
-                    background-color: var(--primary-hover-color);
+                    background-color: #f1f1f1;
                 }
                 .meal-photo-thumbnail {
                     width: 100px;
                     height: auto;
                     cursor: pointer;
-                    border: 1px solid var(--primary-border-color);
+                    border: 1px solid #ddd;
                     border-radius: 4px;
                 }
             </style>
@@ -150,10 +150,14 @@ if menu == "Voir les repas":
             unsafe_allow_html=True,
         )
         
+        # Récupérer les repas depuis Supabase
         user_id = st.session_state["user"]["id"]
         response = supabase.table("meals").select("*").eq("user_id", user_id).execute()
         meals = response.data
         
+        # Debug : afficher les repas récupérés
+        st.write("Données récupérées :", meals)
+
         # Vérification si des repas existent
         if meals and len(meals) > 0:
             # Construire un tableau HTML
