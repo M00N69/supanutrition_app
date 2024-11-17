@@ -1,6 +1,7 @@
 import streamlit as st
 from supabase import create_client
 from io import BytesIO
+import uuid
 
 # Charger les secrets de Streamlit Cloud
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
@@ -56,53 +57,53 @@ if menu == "Ajouter un repas":
         carbs = st.number_input("Glucides", min_value=0.0)
         fats = st.number_input("Lipides", min_value=0.0)
         
-        # Upload de la photo
-        uploaded_file = st.file_uploader("Téléchargez une photo du repas", type=["png", "jpg", "jpeg"])
+        # Upload de plusieurs photos
+        uploaded_files = st.file_uploader(
+            "Téléchargez une ou plusieurs photos du repas", type=["png", "jpg", "jpeg"], accept_multiple_files=True
+        )
         
         if st.button("Ajouter"):
             user_id = st.session_state["user"]["id"]
-            data = {
+            # Insérer les informations du repas
+            meal_data = {
                 "user_id": user_id,
                 "name": name,
                 "calories": calories,
                 "proteins": proteins,
                 "carbs": carbs,
                 "fats": fats,
-                "photo_url": None,  # Photo URL sera ajoutée plus tard si une photo est uploadée
             }
-            
-            # Gestion de l'upload de la photo
-            if uploaded_file is not None:
-                # Générer un nom de fichier unique
-                file_name = f"meals/{user_id}_{name.replace(' ', '_')}.jpg"
-                
-                try:
-                    # Lire le fichier en tant que bytes
-                    file_bytes = uploaded_file.read()
-                    
-                    # Upload du fichier dans Supabase Storage
-                    storage_response = supabase.storage.from_("photos").upload(file_name, file_bytes)
-                    
-                    # Vérification si l'upload a réussi
-                    if storage_response.error_message:  # Vérifier si une erreur est retournée
-                        st.error(f"Erreur lors de l'upload de la photo : {storage_response.error_message}")
-                    else:
-                        # Générer l'URL publique de la photo
-                        photo_url = f"{SUPABASE_URL}/storage/v1/object/public/photos/{file_name}"
-                        data["photo_url"] = photo_url  # Ajouter l'URL de la photo aux données du repas
-                        st.success("Photo téléchargée avec succès !")
-                except Exception as e:
-                    st.error(f"Erreur lors de l'upload de la photo : {str(e)}")
-            
-            # Insérer les données du repas dans la table
             try:
-                response = supabase.table("meals").insert(data).execute()
+                meal_response = supabase.table("meals").insert(meal_data).execute()
                 
-                if response.data:
+                if meal_response.data:
                     st.success("Repas ajouté avec succès !")
-                    st.write("Réponse de Supabase :", response.data)
+                    meal_id = meal_response.data[0]["id"]  # Récupérer l'ID du repas
+                    photo_urls = []
+                    
+                    # Upload des photos dans Supabase Storage
+                    if uploaded_files:
+                        for uploaded_file in uploaded_files:
+                            file_name = f"meals/{meal_id}_{uuid.uuid4()}.jpg"
+                            file_bytes = uploaded_file.read()
+                            
+                            try:
+                                storage_response = supabase.storage.from_("photos").upload(file_name, file_bytes)
+                                
+                                if hasattr(storage_response, "error_message") and storage_response.error_message:
+                                    st.error(f"Erreur pour la photo {uploaded_file.name} : {storage_response.error_message}")
+                                else:
+                                    photo_url = f"{SUPABASE_URL}/storage/v1/object/public/photos/{file_name}"
+                                    photo_urls.append(photo_url)
+                                    # Insérer l'URL de la photo dans la table meal_photos
+                                    supabase.table("meal_photos").insert({"meal_id": meal_id, "photo_url": photo_url}).execute()
+                            except Exception as e:
+                                st.error(f"Erreur lors de l'upload de la photo {uploaded_file.name} : {str(e)}")
+                    
+                    if photo_urls:
+                        st.success(f"{len(photo_urls)} photo(s) ajoutée(s) avec succès !")
                 else:
-                    st.error("Erreur lors de l'ajout du repas. Vérifiez vos permissions ou vos données.")
+                    st.error("Erreur lors de l'ajout du repas.")
             except Exception as e:
                 st.error(f"Erreur inattendue : {str(e)}")
 
@@ -118,7 +119,10 @@ if menu == "Voir les repas":
         if meals:
             for meal in meals:
                 st.write(f"Nom : {meal['name']}, Calories : {meal['calories']}, Protéines : {meal['proteins']}, Glucides : {meal['carbs']}, Lipides : {meal['fats']}")
-                if meal["photo_url"]:
-                    st.image(meal["photo_url"], caption=meal["name"])
+                photos_response = supabase.table("meal_photos").select("*").eq("meal_id", meal["id"]).execute()
+                photos = photos_response.data
+                if photos:
+                    for photo in photos:
+                        st.image(photo["photo_url"], caption=f"Photo de {meal['name']}")
         else:
             st.info("Aucun repas enregistré.")
