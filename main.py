@@ -118,11 +118,10 @@ if menu == "Voir les repas":
         response = supabase.table("meals").select("*").eq("user_id", user_id).execute()
         meals = response.data
         
-        # Vérification des repas
         if not meals or len(meals) == 0:
             st.info("Aucun repas enregistré.")
         else:
-            # Ajouter des styles CSS pour le tableau
+            # Ajouter des styles CSS pour améliorer l'apparence du tableau
             st.markdown(
                 """
                 <style>
@@ -147,9 +146,6 @@ if menu == "Voir les repas":
                     .meal-table tr:nth-child(odd) {
                         background-color: #555;
                     }
-                    .meal-table tr:hover {
-                        background-color: #666;
-                    }
                     .meal-photo-thumbnail {
                         width: 80px;
                         height: auto;
@@ -161,7 +157,7 @@ if menu == "Voir les repas":
                 unsafe_allow_html=True,
             )
             
-            # Construire le tableau HTML
+            # Générer le tableau HTML
             table_html = """
             <table class="meal-table">
                 <thead>
@@ -178,10 +174,11 @@ if menu == "Voir les repas":
             """
             
             for meal in meals:
+                # Récupérer les photos associées
                 photos_response = supabase.table("meal_photos").select("*").eq("meal_id", meal["id"]).execute()
                 photos = photos_response.data
                 photo_thumbnails = ""
-                
+
                 if photos and len(photos) > 0:
                     for photo in photos:
                         photo_thumbnails += f"""
@@ -191,7 +188,8 @@ if menu == "Voir les repas":
                         """
                 else:
                     photo_thumbnails = "Aucune photo"
-                
+
+                # Ajouter une ligne au tableau
                 table_html += f"""
                 <tr>
                     <td>{meal['name']}</td>
