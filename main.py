@@ -69,15 +69,17 @@ if menu == "Ajouter un repas":
             st.write("Données envoyées à Supabase:", data)
             
             try:
+                # Tentative d'insertion des données dans Supabase
                 response = supabase.table("meals").insert(data).execute()
-                
-                # Vérifiez si la réponse contient une erreur
-                if response.error:
-                    st.error(f"Erreur : {response.error['message']}")
-                else:
+
+                # Vérification si l'insertion a réussi
+                if response.data:  # Si des données sont retournées, l'insertion a réussi
                     st.success("Repas ajouté avec succès !")
-                    st.write(response.data)  # Facultatif : Affichez la réponse de Supabase
+                    st.write("Réponse de Supabase :", response.data)
+                else:  # En cas d'échec, on affiche un message d'erreur
+                    st.error("Erreur lors de l'ajout du repas. Vérifiez vos permissions ou vos données.")
             except Exception as e:
+                # Gestion des exceptions inattendues
                 st.error(f"Erreur inattendue : {str(e)}")
 
 # Voir les repas
