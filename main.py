@@ -145,10 +145,6 @@ if menu == "Voir les repas":
                     border: 1px solid var(--primary-border-color);
                     border-radius: 4px;
                 }
-                body {
-                    color: var(--text-color);
-                    background-color: var(--primary-background-color);
-                }
             </style>
             """,
             unsafe_allow_html=True,
@@ -157,7 +153,9 @@ if menu == "Voir les repas":
         user_id = st.session_state["user"]["id"]
         response = supabase.table("meals").select("*").eq("user_id", user_id).execute()
         meals = response.data
-        if meals:
+        
+        # Vérification si des repas existent
+        if meals and len(meals) > 0:
             # Construire un tableau HTML
             table_html = """
             <table class="meal-table">
@@ -179,7 +177,8 @@ if menu == "Voir les repas":
                 photos = photos_response.data
                 photo_thumbnails = ""
                 
-                if photos:
+                # Générer les miniatures des photos
+                if photos and len(photos) > 0:
                     for photo in photos:
                         photo_thumbnails += f"""
                         <a href="{photo['photo_url']}" target="_blank">
