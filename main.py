@@ -2,9 +2,7 @@ import streamlit as st
 from supabase import create_client
 from io import BytesIO
 import uuid
-import streamlit.components.v1 as components
 import pandas as pd
-
 
 # Charger les secrets de Streamlit Cloud
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
@@ -55,11 +53,11 @@ if menu == "Ajouter un repas":
     else:
         st.header("Ajouter un repas")
         name = st.text_input("Nom du repas")
-        calories = st.number_input("Calories", min_value=0.0)
-        proteins = st.number_input("Protéines", min_value=0.0)
-        carbs = st.number_input("Glucides", min_value=0.0)
-        fats = st.number_input("Lipides", min_value=0.0)
-        
+        calories = st.slider("Calories", min_value=0, max_value=5000, step=50)
+        proteins = st.slider("Protéines (g)", min_value=0, max_value=100, step=1)
+        carbs = st.slider("Glucides (g)", min_value=0, max_value=100, step=1)
+        fats = st.slider("Lipides (g)", min_value=0, max_value=100, step=1)
+
         # Upload de plusieurs photos
         uploaded_files = st.file_uploader(
             "Téléchargez une ou plusieurs photos du repas", type=["png", "jpg", "jpeg"], accept_multiple_files=True
@@ -110,6 +108,7 @@ if menu == "Ajouter un repas":
             except Exception as e:
                 st.error(f"Erreur inattendue : {str(e)}")
 
+# Voir les repas
 if menu == "Voir les repas":
     if st.session_state["user"] is None:
         st.warning("Veuillez vous connecter pour voir vos repas.")
@@ -133,7 +132,7 @@ if menu == "Voir les repas":
                 photos = photos_response.data
 
                 # Si des photos existent, prendre la première comme miniature
-                photo_url = photos[0]["photo_url"] if photos and len(photos) > 0 else "Aucune photo"
+                photo_url = photos[0]["photo_url"] if photos and len(photos) > 0 else None
 
                 # Ajouter les données formatées dans la liste
                 formatted_data.append({
@@ -142,17 +141,22 @@ if menu == "Voir les repas":
                     "Protéines (g)": meal["proteins"],
                     "Glucides (g)": meal["carbs"],
                     "Lipides (g)": meal["fats"],
-                    "Photo URL": photo_url  # URL de la photo ou texte "Aucune photo"
+                    "Photo": photo_url  # URL de la photo ou None
                 })
 
             # Convertir les données en DataFrame Pandas
             df = pd.DataFrame(formatted_data)
 
-            # Afficher le tableau dans Streamlit avec des liens pour les photos
-            st.write("Cliquez sur les liens pour afficher les photos (si disponibles).")
-            for index, row in df.iterrows():
-                st.markdown(f"**Nom**: {row['Nom']} - **Calories**: {row['Calories']} - **Protéines (g)**: {row['Protéines (g)']} - **Glucides (g)**: {row['Glucides (g)']} - **Lipides (g)**: {row['Lipides (g)']}")
-                if row["Photo URL"] != "Aucune photo":
-                    st.image(row["Photo URL"], width=150, caption=f"Photo de {row['Nom']}")
-                else:
-                    st.write("Aucune photo disponible.")
+            # Configurer le tableau interactif avec des colonnes personnalisées
+            st.dataframe(
+                df,
+                use_container_width=True,
+                column_config={
+                    "Photo": st.column_config.ImageColumn("Photo", width="small"),
+                    "Calories": st.column_config.ProgressColumn("Calories", max_value=5000),
+                    "Protéines (g)": st.column_config.ProgressColumn("Protéines (g)", max_value=100),
+                    "Glucides (g)": st.column_config.ProgressColumn("Glucides (g)", max_value=100),
+                    "Lipides (g)": st.column_config.ProgressColumn("Lipides (g)", max_value=100),
+                }
+            )
+
