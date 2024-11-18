@@ -34,16 +34,6 @@ def get_meal_photos(meal_id):
     return response.data if response else []
 
 
-def generate_secure_photo_url(file_name):
-    """Génère une URL temporaire sécurisée pour une photo."""
-    try:
-        response = supabase.storage.from_("photos").create_signed_url(file_name, 3600)
-        return response.link
-    except Exception as e:
-        st.error(f"Erreur lors de la génération de l'URL sécurisée pour {file_name}: {str(e)}")
-        return None
-
-
 # Menu principal
 menu = st.sidebar.selectbox(
     "Menu", ["Inscription", "Connexion", "Ajouter un repas", "Voir les repas"]
@@ -115,7 +105,7 @@ if menu == "Ajouter un repas":
                         file_bytes = uploaded_file.read()
                         supabase.storage.from_("photos").upload(file_name, file_bytes)
                         supabase.table("meal_photos").insert(
-                            {"meal_id": meal_id, "photo_url": file_name}
+                            {"meal_id": meal_id, "photo_url": f"{SUPABASE_URL}/storage/v1/object/public/photos/{file_name}"}
                         ).execute()
                     st.success("Repas ajouté avec succès !")
                 else:
@@ -140,9 +130,8 @@ if menu == "Voir les repas":
             meal_data = []
             for meal in meals:
                 photos = get_meal_photos(meal["id"])
-                preview_url = None
-                if photos:
-                    preview_url = generate_secure_photo_url(photos[0]["photo_url"])
+                preview_url = photos[0]["photo_url"] if photos else None  # Utilise directement l'URL
+
                 meal_data.append(
                     {
                         "Nom": meal["name"],
