@@ -127,21 +127,24 @@ if menu == "Voir les repas":
             st.info("Aucun repas enregistré.")
         else:
             for meal in meals:
-                st.subheader(meal["name"])
-                photos = get_meal_photos(meal["id"])
-                if photos:
-                    for photo in photos:
-                        st.image(photo["photo_url"], use_column_width=True)
-                else:
-                    st.write("Aucune photo disponible.")
-                
-                # Informations nutritionnelles
-                st.markdown(
-                    f"""
-                    **Calories**: {meal['calories']}  
-                    **Protéines**: {meal['proteins']} g  
-                    **Glucides**: {meal['carbs']} g  
-                    **Lipides**: {meal['fats']} g
-                    """
-                )
+                col1, col2 = st.columns([1, 1])  # Deux colonnes : tableau (col1) et image (col2)
+
+                with col1:
+                    st.subheader(meal["name"])
+                    st.markdown(
+                        f"""
+                        **Calories**: {meal['calories']}  
+                        **Protéines**: {meal['proteins']} g  
+                        **Glucides**: {meal['carbs']} g  
+                        **Lipides**: {meal['fats']} g
+                        """
+                    )
+
+                with col2:
+                    photos = get_meal_photos(meal["id"])
+                    if photos:
+                        st.image(photos[0]["photo_url"], use_column_width=True)
+                    else:
+                        st.write("Aucune photo disponible.")
+
                 st.markdown("---")
