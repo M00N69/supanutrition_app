@@ -106,7 +106,7 @@ if menu == "Ajouter un repas":
                             except Exception as e:
                                 st.error(f"Erreur lors de l'upload de la photo {uploaded_file.name} : {str(e)}")
                                         
-                                        if photo_urls:
+                                    if photo_urls:
                                             st.success(f"{len(photo_urls)} photo(s) ajoutée(s) avec succès !")
                                     else:
                                         st.error("Erreur lors de l'ajout du repas.")
