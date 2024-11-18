@@ -148,6 +148,46 @@ if menu == "Voir les repas":
                     "Photo": photo_url  # URL de la photo ou None
                 })
 
+            # Display meals in a table with images
+            st.write("Liste de vos repas :")
+
+            # Construct an HTML table with images
+            table_html = """
+            <table style="width:100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="border: 1px solid black;">
+                        <th style="text-align:left; padding: 8px;">Nom</th>
+                        <th style="text-align:left; padding: 8px;">Calories</th>
+                        <th style="text-align:left; padding: 8px;">Protéines (g)</th>
+                        <th style="text-align:left; padding: 8px;">Glucides (g)</th>
+                        <th style="text-align:left; padding: 8px;">Lipides (g)</th>
+                        <th style="text-align:left; padding: 8px;">Photo</th>
+                    </tr>
+                </thead>
+                <tbody>
+            """
+
+            for meal in formatted_data:
+                photo_html = f'<img src="{meal["Photo"]}" style="width:50px; height:auto;">' if meal["Photo"] else "Aucune photo"
+                table_html += f"""
+                    <tr style="border: 1px solid black;">
+                        <td style="padding: 8px;">{meal["Nom"]}</td>
+                        <td style="padding: 8px;">{meal["Calories"]}</td>
+                        <td style="padding: 8px;">{meal["Protéines (g)"]}</td>
+                        <td style="padding: 8px;">{meal["Glucides (g)"]}</td>
+                        <td style="padding: 8px;">{meal["Lipides (g)"]}</td>
+                        <td style="padding: 8px;">{photo_html}</td>
+                    </tr>
+                """
+
+            table_html += """
+                </tbody>
+            </table>
+            """
+
+            # Use st.markdown to render the HTML table
+            st.markdown(table_html, unsafe_allow_html=True)
+
             # Convertir les données en DataFrame Pandas
             df = pd.DataFrame(formatted_data)
 
