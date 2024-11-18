@@ -2,6 +2,8 @@ import streamlit as st
 from supabase import create_client
 import pandas as pd
 import uuid
+from datetime import datetime
+import matplotlib.pyplot as plt
 
 # Configurer l'application en mode large
 st.set_page_config(layout="wide")
@@ -29,6 +31,23 @@ def get_meal_photos(meal_id):
     response = supabase.table("meal_photos").select("*").eq("meal_id", meal_id).execute()
     return response.data if response else []
 
+# Fonction utilitaire pour enregistrer un entraînement
+def add_training(user_id, training_type, date, duration, calories_burned):
+    """Ajoute un entraînement pour un utilisateur."""
+    response = supabase.table("trainings").insert({
+        "user_id": user_id,
+        "training_type": training_type,
+        "date": date,
+        "duration": duration,
+        "calories_burned": calories_burned,
+    }).execute()
+    return response
+
+# Fonction utilitaire pour récupérer les entraînements d'un utilisateur
+def get_user_trainings(user_id):
+    """Récupère les entraînements d'un utilisateur."""
+    response = supabase.table("trainings").select("*").eq("user_id", user_id).execute()
+    return response.data if response else []
 
 # Interface utilisateur
 def show_welcome_message():
@@ -165,3 +184,103 @@ if menu == "Voir les repas":
                         st.write("Pas de photo.")
 
                 st.markdown("---")  # Séparation visuelle
+# Ajouter des entraînements
+if menu == "Ajouter un entraînement":
+    if st.session_state["user"] is None:
+        st.warning("Veuillez vous connecter pour ajouter un entraînement.")
+    else:
+        st.header("Ajouter un entraînement")
+
+        training_type = st.selectbox(
+            "Type d’entraînement", ["Course", "Vélo", "Musculation", "Natation", "Marche"]
+        )
+        date = st.date_input("Date de l’entraînement", value=datetime.now())
+        duration = st.slider("Durée (en minutes)", 0, 300, 60)
+        calories_burned = st.slider("Calories brûlées", 0, 2000, 300)
+
+        if st.button("Ajouter l’entraînement"):
+            user_id = st.session_state["user"]["id"]
+            response = add_training(user_id, training_type, date, duration, calories_burned)
+            if response.data:
+                st.success("Entraînement ajouté avec succès !")
+            else:
+                st.error("Erreur lors de l'ajout de l'entraînement.")
+
+# Voir les performances sportives
+if menu == "Voir les entraînements":
+    if st.session_state["user"] is None:
+        st.warning("Veuillez vous connecter pour voir vos entraînements.")
+    else:
+        st.header("Vos entraînements")
+
+        user_id = st.session_state["user"]["id"]
+        trainings = get_user_trainings(user_id)
+
+        if not trainings:
+            st.info("Aucun entraînement enregistré.")
+        else:
+            df = pd.DataFrame(trainings)
+            st.dataframe(df)
+
+# Suggestions personnalisées
+if menu == "Suggestions personnalisées":
+    if st.session_state["user"] is None:
+        st.warning("Veuillez vous connecter pour voir vos suggestions.")
+    else:
+        st.header("Suggestions personnalisées")
+
+        user_id = st.session_state["user"]["id"]
+        trainings = get_user_trainings(user_id)
+        meals = get_user_meals(user_id)
+
+        if not trainings:
+            st.info("Aucun entraînement trouvé pour générer des suggestions.")
+        elif not meals:
+            st.info("Aucun repas trouvé pour générer des suggestions.")
+        else:
+            total_burned = sum([t["calories_burned"] for t in trainings])
+            total_calories = sum([m["calories"] for m in meals])
+
+            st.markdown(f"### **Calories brûlées cette semaine** : {total_burned} kcal")
+            st.markdown(f"### **Calories consommées cette semaine** : {total_calories} kcal")
+
+            # Suggestions basées sur le déficit calorique
+            deficit = total_burned - total_calories
+            if deficit > 0:
+                st.success(
+                    f"Vous avez un déficit calorique de {deficit} kcal. Nous vous recommandons de consommer des repas plus caloriques."
+                )
+            else:
+                st.warning(
+                    f"Vous avez un surplus calorique de {-deficit} kcal. Essayez de réduire les calories dans vos repas."
+                )
+# Visualisations avancées
+if menu == "Visualisations avancées":
+    if st.session_state["user"] is None:
+        st.warning("Veuillez vous connecter pour accéder aux visualisations.")
+    else:
+        st.header("Visualisations avancées")
+
+        user_id = st.session_state["user"]["id"]
+        trainings = get_user_trainings(user_id)
+        meals = get_user_meals(user_id)
+
+        if not trainings or not meals:
+            st.info("Données insuffisantes pour générer des visualisations.")
+        else:
+            # Préparer les données
+            training_dates = [t["date"] for t in trainings]
+            calories_burned = [t["calories_burned"] for t in trainings]
+            meal_dates = [m["date"] for m in meals]
+            calories_consumed = [m["calories"] for m in meals]
+
+            # Graphique 1 : Calories brûlées vs consommées
+            plt.figure(figsize=(10, 5))
+            plt.plot(training_dates, calories_burned, label="Calories brûlées", marker="o")
+            plt.plot(meal_dates, calories_consumed, label="Calories consommées", marker="o")
+            plt.xlabel("Date")
+            plt.ylabel("Calories")
+            plt.title("Calories brûlées vs consommées")
+            plt.legend()
+            st.pyplot(plt)
+            
