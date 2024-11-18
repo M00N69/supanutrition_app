@@ -39,21 +39,26 @@ menu = st.sidebar.selectbox(
     "Menu", ["Inscription", "Connexion", "Ajouter un repas", "Voir les repas"]
 )
 
-# Inscription
 if menu == "Inscription":
     st.header("Créer un compte")
     email = st.text_input("Email")
     password = st.text_input("Mot de passe", type="password")
     if st.button("S'inscrire"):
         try:
-            response = supabase.auth.sign_up({"email": email, "password": password})
-            if response.user:
-                st.success("Inscription réussie !")
+            # Appel à Supabase pour inscrire un utilisateur
+            response = supabase.auth.sign_up({
+                "email": email,
+                "password": password
+            })
+            if response.user:  # Vérifie si l'utilisateur est créé avec succès
+                st.success("Inscription réussie ! Un email de vérification a été envoyé.")
+            elif response.error:  # Gère les erreurs retournées par Supabase
+                st.error(f"Erreur : {response.error['message']}")
             else:
-                st.error(f"Erreur : {response.get('error', {}).get('message', 'Erreur inconnue')}")
+                st.error("Une erreur inconnue s'est produite.")
         except Exception as e:
             st.error(f"Erreur inattendue : {str(e)}")
-
+            
 # Connexion
 if menu == "Connexion":
     st.header("Se connecter")
