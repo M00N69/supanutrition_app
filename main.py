@@ -21,6 +21,7 @@ if "user" not in st.session_state:
     st.session_state["user"] = None
 
 
+# Fonctions utilitaires
 def get_user_meals(user_id):
     """Récupère les repas d'un utilisateur."""
     response = supabase.table("meals").select("*").eq("user_id", user_id).execute()
