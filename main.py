@@ -6,6 +6,8 @@ import uuid
 # Configurer l'application en mode large
 st.set_page_config(layout="wide")
 
+st.write(st.__version__)
+
 # Charger les secrets de Streamlit Cloud
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
