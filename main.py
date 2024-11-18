@@ -13,13 +13,9 @@ SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
 # Connexion à Supabase
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# Interface utilisateur Streamlit
-st.title("Nutrition App")
-
 # Initialisation de l'état de session pour l'utilisateur
 if "user" not in st.session_state:
     st.session_state["user"] = None
-
 
 # Fonctions utilitaires
 def get_user_meals(user_id):
@@ -34,10 +30,22 @@ def get_meal_photos(meal_id):
     return response.data if response else []
 
 
+# Interface utilisateur
+def show_welcome_message():
+    """Affiche un message de bienvenue pour l'utilisateur connecté."""
+    user = st.session_state["user"]
+    if user:
+        st.markdown(f"### Bonjour, **{user['email']}** ! Passez une excellente journée.")
+    else:
+        st.markdown("### Bienvenue sur l'application Nutrition App !")
+
+
 # Menu principal
 menu = st.sidebar.selectbox(
-    "Menu", ["Inscription", "Connexion", "Ajouter un repas", "Voir les repas"]
+    "Menu", ["Inscription", "Connexion", "Mon Profil", "Ajouter un repas", "Voir les repas"]
 )
+
+show_welcome_message()
 
 if menu == "Inscription":
     st.header("Créer un compte")
@@ -45,21 +53,19 @@ if menu == "Inscription":
     password = st.text_input("Mot de passe", type="password")
     if st.button("S'inscrire"):
         try:
-            # Appel à Supabase pour inscrire un utilisateur
             response = supabase.auth.sign_up({
                 "email": email,
                 "password": password
             })
-            if response.user:  # Vérifie si l'utilisateur est créé avec succès
+            if response.user:
                 st.success("Inscription réussie ! Un email de vérification a été envoyé.")
-            elif response.error:  # Gère les erreurs retournées par Supabase
+            elif response.error:
                 st.error(f"Erreur : {response.error['message']}")
             else:
                 st.error("Une erreur inconnue s'est produite.")
         except Exception as e:
             st.error(f"Erreur inattendue : {str(e)}")
-            
-# Connexion
+
 if menu == "Connexion":
     st.header("Se connecter")
     email = st.text_input("Email")
@@ -72,10 +78,21 @@ if menu == "Connexion":
                 st.session_state["user"] = {"id": response.user.id, "email": response.user.email}
             else:
                 st.error(f"Erreur : {response.get('error', {}).get('message', 'Erreur inconnue')}")
+
         except Exception as e:
             st.error(f"Erreur inattendue : {str(e)}")
 
-# Ajouter un repas
+if menu == "Mon Profil":
+    if st.session_state["user"] is None:
+        st.warning("Veuillez vous connecter pour accéder à votre profil.")
+    else:
+        user = st.session_state["user"]
+        st.header("Votre Profil")
+        st.markdown(f"**Email** : {user['email']}")
+        if st.button("Déconnexion"):
+            st.session_state["user"] = None
+            st.success("Vous avez été déconnecté.")
+
 if menu == "Ajouter un repas":
     if st.session_state["user"] is None:
         st.warning("Veuillez vous connecter pour ajouter un repas.")
@@ -118,7 +135,6 @@ if menu == "Ajouter un repas":
             except Exception as e:
                 st.error(f"Erreur inattendue : {str(e)}")
 
-# Voir les repas
 if menu == "Voir les repas":
     if st.session_state["user"] is None:
         st.warning("Veuillez vous connecter pour voir vos repas.")
@@ -131,25 +147,12 @@ if menu == "Voir les repas":
         if not meals:
             st.info("Aucun repas enregistré.")
         else:
+            df = pd.DataFrame(meals)
+            df = df[["name", "calories", "proteins", "carbs", "fats"]]  # Sélectionner les colonnes pertinentes
+            st.dataframe(df)
+
             for meal in meals:
-                col1, col2 = st.columns([1, 1])  # Deux colonnes : tableau (col1) et image (col2)
-
-                with col1:
-                    st.subheader(meal["name"])
-                    st.markdown(
-                        f"""
-                        **Calories**: {meal['calories']}  
-                        **Protéines**: {meal['proteins']} g  
-                        **Glucides**: {meal['carbs']} g  
-                        **Lipides**: {meal['fats']} g
-                        """
-                    )
-
-                with col2:
-                    photos = get_meal_photos(meal["id"])
-                    if photos:
-                        st.image(photos[0]["photo_url"], use_column_width=True)
-                    else:
-                        st.write("Aucune photo disponible.")
-
+                photos = get_meal_photos(meal["id"])
+                if photos:
+                    st.image(photos[0]["photo_url"], use_column_width=True)
                 st.markdown("---")
