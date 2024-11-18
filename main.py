@@ -147,12 +147,21 @@ if menu == "Voir les repas":
         if not meals:
             st.info("Aucun repas enregistré.")
         else:
-            df = pd.DataFrame(meals)
-            df = df[["name", "calories", "proteins", "carbs", "fats"]]  # Sélectionner les colonnes pertinentes
-            st.dataframe(df)
-
             for meal in meals:
                 photos = get_meal_photos(meal["id"])
-                if photos:
-                    st.image(photos[0]["photo_url"], use_column_width=True)
-                st.markdown("---")
+                
+                col1, col2 = st.columns([3, 1])  # Disposition : Infos à gauche, photo à droite
+                with col1:
+                    st.subheader(f"🍴 {meal['name']}")  # Titre en gras avec emoji
+                    st.write(f"**Calories**: {meal['calories']} kcal")
+                    st.write(f"**Protéines**: {meal['proteins']} g")
+                    st.write(f"**Glucides**: {meal['carbs']} g")
+                    st.write(f"**Lipides**: {meal['fats']} g")
+
+                with col2:
+                    if photos:
+                        st.image(photos[0]["photo_url"], width=120)  # Miniature harmonieuse
+                    else:
+                        st.write("Pas de photo.")
+
+                st.markdown("---")  # Séparation visuelle
