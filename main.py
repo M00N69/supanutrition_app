@@ -88,14 +88,13 @@ if menu == "Ajouter un repas":
                     # Upload des photos dans Supabase Storage
                     if uploaded_files:
                         for uploaded_file in uploaded_files:
+                            # Générer un nom de fichier unique avec l'extension correcte
                             file_name = f"meals/{meal_id}_{uuid.uuid4()}.jpg"
                             file_bytes = uploaded_file.read()
                             
                             try:
-                                # Upload de l'image sans définir de headers
-                                storage_response = supabase.storage.from_("photos").upload(
-                                    file_name, file_bytes
-                                )
+                                # Upload du fichier sans headers personnalisés
+                                storage_response = supabase.storage.from_("photos").upload(file_name, file_bytes)
                                 
                                 if hasattr(storage_response, "error_message") and storage_response.error_message:
                                     st.error(f"Erreur pour la photo {uploaded_file.name} : {storage_response.error_message}")
@@ -106,13 +105,13 @@ if menu == "Ajouter un repas":
                                     supabase.table("meal_photos").insert({"meal_id": meal_id, "photo_url": photo_url}).execute()
                             except Exception as e:
                                 st.error(f"Erreur lors de l'upload de la photo {uploaded_file.name} : {str(e)}")
-                    
-                    if photo_urls:
-                        st.success(f"{len(photo_urls)} photo(s) ajoutée(s) avec succès !")
-                else:
-                    st.error("Erreur lors de l'ajout du repas.")
-            except Exception as e:
-                st.error(f"Erreur inattendue : {str(e)}")
+                                        
+                                        if photo_urls:
+                                            st.success(f"{len(photo_urls)} photo(s) ajoutée(s) avec succès !")
+                                    else:
+                                        st.error("Erreur lors de l'ajout du repas.")
+                                except Exception as e:
+                                    st.error(f"Erreur inattendue : {str(e)}")
 
 # Voir les repas
 if menu == "Voir les repas":
