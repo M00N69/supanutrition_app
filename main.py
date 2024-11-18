@@ -85,34 +85,32 @@ if menu == "Ajouter un repas":
                     meal_id = meal_response.data[0]["id"]  # Récupérer l'ID du repas
                     photo_urls = []
                     
-                    # Upload des photos dans Supabase Storage
-                    if uploaded_files:
-                        for uploaded_file in uploaded_files:
-                            # Générer un nom de fichier unique avec l'extension correcte
-                            file_name = f"meals/{meal_id}_{uuid.uuid4()}.jpg"
-                            file_bytes = uploaded_file.read()
-                            
-                            try:
-                                # Upload du fichier sans headers personnalisés
-                                storage_response = supabase.storage.from_("photos").upload(file_name, file_bytes)
-                                
-                                if hasattr(storage_response, "error_message") and storage_response.error_message:
-                                    st.error(f"Erreur pour la photo {uploaded_file.name} : {storage_response.error_message}")
-                                else:
-                                    photo_url = f"{SUPABASE_URL}/storage/v1/object/public/photos/{file_name}"
-                                    photo_urls.append(photo_url)
-                                    # Insérer l'URL de la photo dans la table meal_photos
-                                    supabase.table("meal_photos").insert({"meal_id": meal_id, "photo_url": photo_url}).execute()
-                            except Exception as e:
-                                st.error(f"Erreur lors de l'upload de la photo {uploaded_file.name} : {str(e)}")
-                                        
-                                    if photo_urls:
-                                            st.success(f"{len(photo_urls)} photo(s) ajoutée(s) avec succès !")
-                                    else:
-                                        st.error("Erreur lors de l'ajout du repas.")
-                            except Exception as e:
-                                    st.error(f"Erreur inattendue : {str(e)}")
+ # Upload des photos dans Supabase Storage
+if uploaded_files:
+    for uploaded_file in uploaded_files:
+        # Générer un nom de fichier unique avec l'extension correcte
+        file_name = f"meals/{meal_id}_{uuid.uuid4()}.jpg"
+        file_bytes = uploaded_file.read()
 
+        try:
+            # Upload du fichier sans headers personnalisés
+            storage_response = supabase.storage.from_("photos").upload(file_name, file_bytes)
+
+            if hasattr(storage_response, "error_message") and storage_response.error_message:
+                st.error(f"Erreur pour la photo {uploaded_file.name} : {storage_response.error_message}")
+            else:
+                photo_url = f"{SUPABASE_URL}/storage/v1/object/public/photos/{file_name}"
+                photo_urls.append(photo_url)
+                # Insérer l'URL de la photo dans la table meal_photos
+                supabase.table("meal_photos").insert({"meal_id": meal_id, "photo_url": photo_url}).execute()
+
+        except Exception as e:
+            st.error(f"Erreur lors de l'upload de la photo {uploaded_file.name} : {str(e)}")
+
+if photo_urls:
+    st.success(f"{len(photo_urls)} photo(s) ajoutée(s) avec succès !")
+else:
+    st.error("Erreur lors de l'ajout du repas.")
 # Voir les repas
 if menu == "Voir les repas":
     if st.session_state["user"] is None:
