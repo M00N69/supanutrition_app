@@ -4,6 +4,9 @@ from io import BytesIO
 import uuid
 import pandas as pd
 
+# Configurer l'application en mode large
+st.set_page_config(layout="wide")
+
 # Charger les secrets de Streamlit Cloud
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
@@ -89,7 +92,10 @@ if menu == "Ajouter un repas":
                             file_bytes = uploaded_file.read()
                             
                             try:
-                                storage_response = supabase.storage.from_("photos").upload(file_name, file_bytes)
+                                headers = {"Content-Type": "image/jpeg"}  # Remplacez par "image/png" si nécessaire
+                                storage_response = supabase.storage.from_("photos").upload(
+                                    file_name, file_bytes, headers=headers
+                                )
                                 
                                 if hasattr(storage_response, "error_message") and storage_response.error_message:
                                     st.error(f"Erreur pour la photo {uploaded_file.name} : {storage_response.error_message}")
@@ -159,4 +165,3 @@ if menu == "Voir les repas":
                     "Lipides (g)": st.column_config.ProgressColumn("Lipides (g)", max_value=100),
                 }
             )
-
