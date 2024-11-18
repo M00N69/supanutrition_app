@@ -34,10 +34,13 @@ def get_meal_photos(meal_id):
 # Fonction utilitaire pour enregistrer un entraînement
 def add_training(user_id, training_type, date, duration, calories_burned):
     """Ajoute un entraînement pour un utilisateur."""
+    # Convertir la date en format ISO (YYYY-MM-DD)
+    date_str = date.strftime("%Y-%m-%d") if isinstance(date, datetime) else str(date)
+
     response = supabase.table("trainings").insert({
         "user_id": user_id,
         "training_type": training_type,
-        "date": date,
+        "date": date_str,  # Utilisation de la date convertie
         "duration": duration,
         "calories_burned": calories_burned,
     }).execute()
