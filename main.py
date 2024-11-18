@@ -59,9 +59,19 @@ def show_welcome_message():
         st.markdown("### Bienvenue sur l'application Nutrition App !")
 
 
-# Menu principal
+# Menu principal mis à jour
 menu = st.sidebar.selectbox(
-    "Menu", ["Inscription", "Connexion", "Mon Profil", "Ajouter un repas", "Voir les repas"]
+    "Menu", [
+        "Inscription", 
+        "Connexion", 
+        "Mon Profil", 
+        "Ajouter un repas", 
+        "Voir les repas", 
+        "Ajouter un entraînement", 
+        "Voir les entraînements", 
+        "Suggestions personnalisées", 
+        "Visualisations avancées"
+    ]
 )
 
 show_welcome_message()
