@@ -110,7 +110,7 @@ if menu == "Ajouter un repas":
                                             st.success(f"{len(photo_urls)} photo(s) ajoutée(s) avec succès !")
                                     else:
                                         st.error("Erreur lors de l'ajout du repas.")
-                                except Exception as e:
+                            except Exception as e:
                                     st.error(f"Erreur inattendue : {str(e)}")
 
 # Voir les repas
