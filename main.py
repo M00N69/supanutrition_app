@@ -6,8 +6,6 @@ import uuid
 # Configurer l'application en mode large
 st.set_page_config(layout="wide")
 
-st.write(st.__version__)
-
 # Charger les secrets de Streamlit Cloud
 SUPABASE_URL = st.secrets["SUPABASE_URL"]
 SUPABASE_KEY = st.secrets["SUPABASE_KEY"]
@@ -128,42 +126,22 @@ if menu == "Voir les repas":
         if not meals:
             st.info("Aucun repas enregistré.")
         else:
-            # Préparer les données pour le DataFrame
-            meal_data = []
             for meal in meals:
+                st.subheader(meal["name"])
                 photos = get_meal_photos(meal["id"])
-                preview_url = photos[0]["photo_url"] if photos else None  # Utilise directement l'URL
-
-                meal_data.append(
-                    {
-                        "Nom": meal["name"],
-                        "Calories": meal["calories"],
-                        "Protéines": meal["proteins"],
-                        "Glucides": meal["carbs"],
-                        "Lipides": meal["fats"],
-                        "Aperçu": preview_url,
-                        "Progression": meal["calories"] / 5000,  # Exemple d'une progression
-                    }
+                if photos:
+                    for photo in photos:
+                        st.image(photo["photo_url"], use_column_width=True)
+                else:
+                    st.write("Aucune photo disponible.")
+                
+                # Informations nutritionnelles
+                st.markdown(
+                    f"""
+                    **Calories**: {meal['calories']}  
+                    **Protéines**: {meal['proteins']} g  
+                    **Glucides**: {meal['carbs']} g  
+                    **Lipides**: {meal['fats']} g
+                    """
                 )
-
-            # Convertir en DataFrame
-            df = pd.DataFrame(meal_data)
-
-            # Configurer les colonnes personnalisées
-            st.data_editor(
-                df,
-                column_config={
-                    "Aperçu": st.column_config.ImageColumn("Aperçu", use_container_width=True),
-                    "Progression": st.column_config.ProgressColumn(
-                        "Progression",
-                        format="{:.0%}",
-                        use_container_width=True,
-                    ),
-                    "Nom": "Nom du repas",
-                    "Calories": "Calories",
-                    "Protéines": "Protéines (g)",
-                    "Glucides": "Glucides (g)",
-                    "Lipides": "Lipides (g)",
-                },
-                hide_index=True,
-            )
+                st.markdown("---")
