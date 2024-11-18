@@ -160,7 +160,7 @@ if menu == "Voir les repas":
 
                 with col2:
                     if photos:
-                        st.image(photos[0]["photo_url"], width=120)  # Miniature harmonieuse
+                        st.image(photos[0]["photo_url"], width=200)  # Miniature harmonieuse
                     else:
                         st.write("Pas de photo.")
 
