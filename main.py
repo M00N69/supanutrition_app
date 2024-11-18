@@ -127,7 +127,7 @@ if menu == "Voir les repas":
         if not meals or len(meals) == 0:
             st.info("Aucun repas enregistré.")
         else:
-            # Créer une liste de dictionnaires pour stocker les données formatées
+            # Créer une liste pour stocker les données formatées
             formatted_data = []
 
             for meal in meals:
@@ -138,7 +138,7 @@ if menu == "Voir les repas":
                 # Si des photos existent, prendre la première comme miniature
                 photo_url = photos[0]["photo_url"] if photos and len(photos) > 0 else None
 
-                # Ajouter les données formatées dans la liste
+                # Ajouter les données formatées
                 formatted_data.append({
                     "Nom": meal["name"],
                     "Calories": meal["calories"],
@@ -148,11 +148,42 @@ if menu == "Voir les repas":
                     "Photo": photo_url  # URL de la photo ou None
                 })
 
-            # Convertir les données en DataFrame Pandas
-            df = pd.DataFrame(formatted_data)
+            # Afficher les données dans une table avec HTML
+            st.write("Cliquez sur les photos pour les agrandir.")
+            table_html = """
+            <table style="width:100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>Calories</th>
+                        <th>Protéines (g)</th>
+                        <th>Glucides (g)</th>
+                        <th>Lipides (g)</th>
+                        <th>Photo</th>
+                    </tr>
+                </thead>
+                <tbody>
+            """
+            for data in formatted_data:
+                photo_cell = (
+                    f'<a href="{data["Photo"]}" target="_blank">'
+                    f'<img src="{data["Photo"]}" alt="Photo de {data["Nom"]}" style="width:50px; height:auto;"/>'
+                    f'</a>' if data["Photo"] else "Aucune photo"
+                )
+                table_html += f"""
+                    <tr>
+                        <td>{data["Nom"]}</td>
+                        <td>{data["Calories"]}</td>
+                        <td>{data["Protéines (g)"]}</td>
+                        <td>{data["Glucides (g)"]}</td>
+                        <td>{data["Lipides (g)"]}</td>
+                        <td>{photo_cell}</td>
+                    </tr>
+                """
+            table_html += "</tbody></table>"
 
-            # Afficher les données dans une colonne avec des miniatures si possible
-            st.write("Liste de vos repas :")
-            st.dataframe(
-                df.style.format({"Photo": lambda x: f'<img src="{x}" style="width:50px;"/>' if x else "Aucune photo"}), unsafe_allow_html=True
+            # Afficher le tableau HTML
+            st.markdown(
+                table_html,
+                unsafe_allow_html=True
             )
