@@ -35,7 +35,7 @@ def show_welcome_message():
     """Affiche un message de bienvenue pour l'utilisateur connecté."""
     user = st.session_state["user"]
     if user:
-        st.markdown(f"### Bonjour, **{user['email']}** ! Passez une excellente journée.")
+        st.markdown(f"### Bonjour, **{user['email']}** sur l'Appapoute ! ")
     else:
         st.markdown("### Bienvenue sur l'application Nutrition App !")
 
