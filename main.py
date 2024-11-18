@@ -92,9 +92,9 @@ if menu == "Ajouter un repas":
                             file_bytes = uploaded_file.read()
                             
                             try:
-                                headers = {"Content-Type": "image/jpeg"}  # Remplacez par "image/png" si nécessaire
+                                # Upload de l'image sans définir de headers
                                 storage_response = supabase.storage.from_("photos").upload(
-                                    file_name, file_bytes, headers=headers
+                                    file_name, file_bytes
                                 )
                                 
                                 if hasattr(storage_response, "error_message") and storage_response.error_message:
