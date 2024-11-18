@@ -50,15 +50,15 @@ if menu == "Inscription":
                 "email": email,
                 "password": password
             })
-            if response.get("user"):  # Vérifie si l'utilisateur est créé avec succès
+            if response.user:  # Vérifie si l'utilisateur est créé avec succès
                 st.success("Inscription réussie ! Un email de vérification a été envoyé.")
-            elif response.get("error"):  # Gère les erreurs retournées par Supabase
-                st.error(f"Erreur : {response['error']['message']}")
+            elif response.error:  # Gère les erreurs retournées par Supabase
+                st.error(f"Erreur : {response.error['message']}")
             else:
                 st.error("Une erreur inconnue s'est produite.")
         except Exception as e:
             st.error(f"Erreur inattendue : {str(e)}")
-
+            
 # Connexion
 if menu == "Connexion":
     st.header("Se connecter")
