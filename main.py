@@ -56,16 +56,16 @@ if menu == "Ajouter un repas":
     else:
         st.header("Ajouter un repas")
         name = st.text_input("Nom du repas")
-        calories = st.slider("Calories", min_value=0, max_value=5000, step=50)
-        proteins = st.slider("Protéines (g)", min_value=0, max_value=100, step=1)
-        carbs = st.slider("Glucides (g)", min_value=0, max_value=100, step=1)
-        fats = st.slider("Lipides (g)", min_value=0, max_value=100, step=1)
+        calories = st.slider("Calories", 0, 5000, 0)
+        proteins = st.slider("Protéines (g)", 0, 100, 0)
+        carbs = st.slider("Glucides (g)", 0, 100, 0)
+        fats = st.slider("Lipides (g)", 0, 100, 0)
 
         # Upload de plusieurs photos
         uploaded_files = st.file_uploader(
             "Téléchargez une ou plusieurs photos du repas", type=["png", "jpg", "jpeg"], accept_multiple_files=True
         )
-        
+
         if st.button("Ajouter"):
             user_id = st.session_state["user"]["id"]
             # Insérer les informations du repas
@@ -79,45 +79,46 @@ if menu == "Ajouter un repas":
             }
             try:
                 meal_response = supabase.table("meals").insert(meal_data).execute()
-                
                 if meal_response.data:
                     st.success("Repas ajouté avec succès !")
                     meal_id = meal_response.data[0]["id"]  # Récupérer l'ID du repas
                     photo_urls = []
-                    
- # Upload des photos dans Supabase Storage
-if uploaded_files:
-    for uploaded_file in uploaded_files:
-        # Générer un nom de fichier unique avec l'extension correcte
-        file_name = f"meals/{meal_id}_{uuid.uuid4()}.jpg"
-        file_bytes = uploaded_file.read()
 
-        try:
-            # Upload du fichier sans headers personnalisés
-            storage_response = supabase.storage.from_("photos").upload(file_name, file_bytes)
+                    # Upload des photos dans Supabase Storage
+                    if uploaded_files:
+                        for uploaded_file in uploaded_files:
+                            # Générer un nom de fichier unique avec l'extension correcte
+                            file_name = f"meals/{meal_id}_{uuid.uuid4()}.jpg"
+                            file_bytes = uploaded_file.read()
 
-            if hasattr(storage_response, "error_message") and storage_response.error_message:
-                st.error(f"Erreur pour la photo {uploaded_file.name} : {storage_response.error_message}")
-            else:
-                photo_url = f"{SUPABASE_URL}/storage/v1/object/public/photos/{file_name}"
-                photo_urls.append(photo_url)
-                # Insérer l'URL de la photo dans la table meal_photos
-                supabase.table("meal_photos").insert({"meal_id": meal_id, "photo_url": photo_url}).execute()
+                            try:
+                                # Upload du fichier
+                                storage_response = supabase.storage.from_("photos").upload(file_name, file_bytes)
 
-        except Exception as e:
-            st.error(f"Erreur lors de l'upload de la photo {uploaded_file.name} : {str(e)}")
+                                if hasattr(storage_response, "error_message") and storage_response.error_message:
+                                    st.error(f"Erreur pour la photo {uploaded_file.name} : {storage_response.error_message}")
+                                else:
+                                    photo_url = f"{SUPABASE_URL}/storage/v1/object/public/photos/{file_name}"
+                                    photo_urls.append(photo_url)
+                                    # Insérer l'URL de la photo dans la table meal_photos
+                                    supabase.table("meal_photos").insert({"meal_id": meal_id, "photo_url": photo_url}).execute()
+                            except Exception as e:
+                                st.error(f"Erreur lors de l'upload de la photo {uploaded_file.name} : {str(e)}")
 
-if photo_urls:
-    st.success(f"{len(photo_urls)} photo(s) ajoutée(s) avec succès !")
-else:
-    st.error("Erreur lors de l'ajout du repas.")
+                    if photo_urls:
+                        st.success(f"{len(photo_urls)} photo(s) ajoutée(s) avec succès !")
+                else:
+                    st.error("Erreur lors de l'ajout du repas.")
+            except Exception as e:
+                st.error(f"Erreur inattendue : {str(e)}")
+
 # Voir les repas
 if menu == "Voir les repas":
     if st.session_state["user"] is None:
         st.warning("Veuillez vous connecter pour voir vos repas.")
     else:
         st.header("Vos repas")
-        
+
         # Récupérer les repas depuis Supabase
         user_id = st.session_state["user"]["id"]
         response = supabase.table("meals").select("*").eq("user_id", user_id).execute()
@@ -150,15 +151,8 @@ if menu == "Voir les repas":
             # Convertir les données en DataFrame Pandas
             df = pd.DataFrame(formatted_data)
 
-            # Configurer le tableau interactif avec des colonnes personnalisées
+            # Afficher les données dans une colonne avec des miniatures si possible
+            st.write("Liste de vos repas :")
             st.dataframe(
-                df,
-                use_container_width=True,
-                column_config={
-                    "Photo": st.column_config.ImageColumn("Photo", width="small"),
-                    "Calories": st.column_config.ProgressColumn("Calories", max_value=5000),
-                    "Protéines (g)": st.column_config.ProgressColumn("Protéines (g)", max_value=100),
-                    "Glucides (g)": st.column_config.ProgressColumn("Glucides (g)", max_value=100),
-                    "Lipides (g)": st.column_config.ProgressColumn("Lipides (g)", max_value=100),
-                }
+                df.style.format({"Photo": lambda x: f'<img src="{x}" style="width:50px;"/>' if x else "Aucune photo"}), unsafe_allow_html=True
             )
