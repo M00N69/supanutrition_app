@@ -62,6 +62,16 @@ def show_welcome_message():
         st.markdown(f"### Bienvenue, **{user['email']}** sur l'Appapoute ! ")
     else:
         st.markdown("### Bienvenue sur l'application Nutrition App !")
+# Fonction pour ajouter un pictogramme en fonction du type d'entraînement
+def get_training_icon(training_type):
+    icons = {
+        "Course": "🏃‍♂️",
+        "Vélo": "🚴‍♀️",
+        "Musculation": "🏋️‍♂️",
+        "Natation": "🏊‍♀️",
+        "Marche": "🚶‍♂️",
+    }
+    return icons.get(training_type, "❓")  # Par défaut, un point d'interrogation
 
 
 # Menu principal mis à jour
@@ -234,9 +244,43 @@ if menu == "Voir les entraînements":
         if not trainings:
             st.info("Aucun entraînement enregistré.")
         else:
+            # Convertir les données en DataFrame
             df = pd.DataFrame(trainings)
-            st.dataframe(df)
 
+            # Ajouter les colonnes formatées pour un meilleur affichage
+            df["Icone"] = df["training_type"].apply(get_training_icon)
+            df["Date"] = pd.to_datetime(df["date"]).dt.strftime("%d %b %Y")  # Format : 01 Jan 2024
+            df["Durée (min)"] = df["duration"]
+            df["Calories brûlées"] = df["calories_burned"]
+
+            # Garder uniquement les colonnes nécessaires
+            display_df = df[["Icone", "Date", "training_type", "Durée (min)", "Calories brûlées"]]
+            display_df.rename(
+                columns={
+                    "Icone": "Type",
+                    "training_type": "Activité",
+                },
+                inplace=True,
+            )
+
+            # Utiliser AgGrid pour un tableau interactif
+            gb = GridOptionsBuilder.from_dataframe(display_df)
+            gb.configure_pagination(enabled=True)  # Activer la pagination
+            gb.configure_column("Type", width=70)  # Ajuster la largeur de la colonne "Type"
+            gb.configure_column("Activité", width=150)  # Ajuster la largeur de la colonne "Activité"
+            gb.configure_column("Durée (min)", width=100)  # Ajuster la largeur de la colonne "Durée (min)"
+            gb.configure_column("Calories brûlées", width=150)  # Ajuster la largeur de la colonne "Calories brûlées"
+
+            grid_options = gb.build()
+
+            st.markdown("### Tableau des entraînements")
+            AgGrid(
+                display_df,
+                gridOptions=grid_options,
+                theme="balham",  # Thème clair
+                fit_columns_on_grid_load=True,  # Adapter les colonnes à la largeur
+            )
+            
 # Suggestions personnalisées
 if menu == "Suggestions personnalisées":
     if st.session_state["user"] is None:
