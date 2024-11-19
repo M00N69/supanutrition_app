@@ -4,3 +4,7 @@ supabase
 matplotlib
 datetime
 streamlit-aggrid
+numpy
+scikit-learn
+st-aggrid
+requests
