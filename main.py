@@ -335,7 +335,7 @@ if menu == "Voir les entraînements":
                 fit_columns_on_grid_load=True,  # Adapter les colonnes à la largeur
             )
             
-# Suggestions personnalisées
+# Suggestions personnalisées améliorées avec API Spoonacular
 if menu == "Suggestions personnalisées":
     if st.session_state["user"] is None:
         st.warning("Veuillez vous connecter pour voir vos suggestions.")
@@ -367,6 +367,33 @@ if menu == "Suggestions personnalisées":
                 st.warning(
                     f"Vous avez un surplus calorique de {-deficit} kcal. Essayez de réduire les calories dans vos repas."
                 )
+
+            # Calcul des besoins nutritionnels pour Spoonacular
+            predicted_calories = abs(deficit)  # Déficit ou surplus converti en absolu pour ajuster les besoins
+            proteins_needed = 50 if predicted_calories > 400 else 30
+            carbs_needed = 100 if predicted_calories > 600 else 50
+            fats_needed = 20
+
+            st.markdown(f"### Besoins estimés pour combler l'écart :")
+            st.write(f"- Calories : {predicted_calories} kcal")
+            st.write(f"- Protéines : {proteins_needed} g")
+            st.write(f"- Glucides : {carbs_needed} g")
+            st.write(f"- Lipides : {fats_needed} g")
+
+            # Appel à l'API Spoonacular
+            st.markdown("### Recettes suggérées :")
+            recipes = get_recipes_from_spoonacular(predicted_calories, proteins_needed, carbs_needed, fats_needed)
+
+            if recipes:
+                for recipe in recipes:
+                    st.markdown(f"### {recipe['title']}")
+                    st.image(recipe["image"], use_column_width=True)
+                    st.write(f"Calories : {recipe['calories']} kcal")
+                    st.write(f"[Voir la recette complète](https://spoonacular.com/recipes/{recipe['id']})")
+            else:
+                st.error("Aucune recette trouvée correspondant aux besoins nutritionnels.")
+
+
 # Visualisations avancées
 if menu == "Visualisations avancées":
     if st.session_state["user"] is None:
