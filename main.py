@@ -4,6 +4,8 @@ import pandas as pd
 import uuid
 from datetime import datetime
 import matplotlib.pyplot as plt
+from st_aggrid import AgGrid
+from st_aggrid.grid_options_builder import GridOptionsBuilder
 
 # Configurer l'application en mode large
 st.set_page_config(layout="wide")
