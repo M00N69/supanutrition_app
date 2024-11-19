@@ -102,6 +102,7 @@ def get_recipes_from_spoonacular(calories, proteins, carbs, fats):
     else:
         st.error(f"Erreur API Spoonacular : {response.json()}")
         return []
+        
 # Modèle prédictif pour les calories brûlées
 def train_predictive_model(trainings):
     """Entraîne un modèle de régression pour prédire les calories brûlées."""
