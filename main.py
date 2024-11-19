@@ -6,6 +6,10 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 from st_aggrid import AgGrid
 from st_aggrid.grid_options_builder import GridOptionsBuilder
+import requests
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+import numpy as np
 
 # Configurer l'application en mode large
 st.set_page_config(layout="wide")
@@ -72,6 +76,55 @@ def get_training_icon(training_type):
         "Marche": "🚶‍♂️",
     }
     return icons.get(training_type, "❓")  # Par défaut, un point d'interrogation
+
+# Fonction pour appeler l'API Spoonacular
+def get_recipes_from_spoonacular(calories, proteins, carbs, fats):
+    """Récupère des recettes adaptées aux macronutriments via Spoonacular."""
+    API_KEY = st.secrets["SPOONACULAR_API_KEY"]  # Ajoutez votre clé API dans les secrets
+    url = "https://api.spoonacular.com/recipes/findByNutrients"
+
+    params = {
+        "minCalories": max(0, calories - 50),
+        "maxCalories": calories + 50,
+        "minProtein": max(0, proteins - 5),
+        "maxProtein": proteins + 5,
+        "minCarbs": max(0, carbs - 10),
+        "maxCarbs": carbs + 10,
+        "minFat": max(0, fats - 5),
+        "maxFat": fats + 5,
+        "number": 3,  # Nombre de recettes à récupérer
+        "apiKey": API_KEY,
+    }
+
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        st.error(f"Erreur API Spoonacular : {response.json()}")
+        return []
+# Modèle prédictif pour les calories brûlées
+def train_predictive_model(trainings):
+    """Entraîne un modèle de régression pour prédire les calories brûlées."""
+    if len(trainings) < 5:  # Vérifier qu'il y a assez de données
+        st.warning("Pas assez de données d'entraînement pour le modèle prédictif.")
+        return None
+
+    df = pd.DataFrame(trainings)
+    X = df[["duration"]]  # Utilise la durée comme caractéristique
+    y = df["calories_burned"]
+
+    # Diviser en ensemble d'entraînement et de test
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Entraîner le modèle
+    model = LinearRegression()
+    model.fit(X_train, y_train)
+
+    # Tester le modèle
+    y_pred = model.predict(X_test)
+    st.write("Précision du modèle (R²) :", model.score(X_test, y_test))
+    return model
+
 
 
 # Menu principal mis à jour
@@ -341,5 +394,79 @@ if menu == "Visualisations avancées":
             plt.ylabel("Calories")
             plt.title("Calories brûlées vs consommées")
             plt.legend()
+            st.pyplot(plt)
+
+if menu == "Suggestions personnalisées":
+    if st.session_state["user"] is None:
+        st.warning("Veuillez vous connecter pour voir vos suggestions.")
+    else:
+        st.header("Suggestions personnalisées")
+
+        user_id = st.session_state["user"]["id"]
+        trainings = get_user_trainings(user_id)
+        meals = get_user_meals(user_id)
+
+        if not trainings or not meals:
+            st.info("Ajoutez plus de données pour générer des suggestions.")
+        else:
+            # Entraîner un modèle prédictif
+            model = train_predictive_model(trainings)
+
+            if model:
+                # Prédire les calories pour un nouvel entraînement
+                next_training_duration = st.slider("Durée du prochain entraînement (min)", 10, 120, 30)
+                predicted_calories = model.predict(np.array([[next_training_duration]]))[0]
+                st.write(f"Calories estimées pour le prochain entraînement : {predicted_calories:.2f} kcal")
+
+                # Calcul des besoins nutritionnels
+                proteins_needed = 50 if predicted_calories > 400 else 30
+                carbs_needed = 100 if predicted_calories > 600 else 50
+                fats_needed = 20
+
+                # Appeler l'API Spoonacular
+                recipes = get_recipes_from_spoonacular(predicted_calories, proteins_needed, carbs_needed, fats_needed)
+
+                # Afficher les recettes
+                st.subheader("Recettes suggérées")
+                for recipe in recipes:
+                    st.markdown(f"### {recipe['title']}")
+                    st.image(recipe["image"])
+                    st.write(f"Calories : {recipe['calories']} kcal")
+
+if menu == "Visualisations avancées":
+    if st.session_state["user"] is None:
+        st.warning("Veuillez vous connecter pour accéder aux visualisations.")
+    else:
+        st.header("Visualisations avancées")
+
+        user_id = st.session_state["user"]["id"]
+        trainings = get_user_trainings(user_id)
+        meals = get_user_meals(user_id)
+
+        if not trainings or not meals:
+            st.info("Données insuffisantes pour générer des visualisations.")
+        else:
+            # Afficher les calories brûlées et consommées
+            training_dates = [t["date"] for t in trainings]
+            calories_burned = [t["calories_burned"] for t in trainings]
+            meal_dates = [m["date"] for m in meals]
+            calories_consumed = [m["calories"] for m in meals]
+
+            plt.figure(figsize=(10, 5))
+            plt.plot(training_dates, calories_burned, label="Calories brûlées", marker="o")
+            plt.plot(meal_dates, calories_consumed, label="Calories consommées", marker="o")
+            plt.xlabel("Date")
+            plt.ylabel("Calories")
+            plt.title("Calories brûlées vs consommées")
+            plt.legend()
+            st.pyplot(plt)
+
+            # Histogramme des durées d'entraînement
+            durations = [t["duration"] for t in trainings]
+            plt.figure(figsize=(10, 5))
+            plt.hist(durations, bins=10, alpha=0.7)
+            plt.xlabel("Durée (min)")
+            plt.ylabel("Fréquence")
+            plt.title("Répartition des durées d'entraînement")
             st.pyplot(plt)
             
