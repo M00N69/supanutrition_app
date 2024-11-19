@@ -387,7 +387,7 @@ if menu == "Suggestions personnalisées":
             if recipes:
                 for recipe in recipes:
                     st.markdown(f"### {recipe['title']}")
-                    st.image(recipe["image"], width=300, height=200)  # Ajuster la largeur de l'image à 300 pixels
+                    st.image(recipe["image"], width=300)  # Ajuster uniquement la largeur   
                     st.write(f"Calories : {recipe['calories']} kcal")
                     st.write(f"[Voir la recette complète](https://spoonacular.com/recipes/{recipe['id']})")
             else:
